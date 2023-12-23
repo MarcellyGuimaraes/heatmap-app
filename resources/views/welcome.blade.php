@@ -13,6 +13,7 @@
     <h1>Todos os Endereços</h1>
 
     <div id="map" style="width: 600px; height: 400px;"></div>
+    <div id="loading" style="display: none;">Carregando...</div>
 
     <form method="POST" action="{{ route('salvarEndereco') }}">
       @csrf
@@ -38,25 +39,40 @@
       attribution: '© OpenStreetMap contributors'
     }).addTo(map);
     
-    fetch('/get-coordenadas-estabelecimento')
-      .then(response => response.json())
-      .then(data => {
-        map.setView([data.latitude, data.longitude], 13);
-      })
-      .catch(error => {
-        console.error('Erro ao obter as coordenadas do endereço do estabelecimento:', error);
-      });
-  
+    var loadingIndicator = document.getElementById('loading');
+    
+    loadingIndicator.style.display = 'block'; // Mostra o indicador de carregamento
     fetch('/get-coordenadas')
-      .then(response => response.json())
+      .then(response => {
+        return response.json();
+      })
       .then(data => {
-        var heat = L.heatLayer(data, {
+        // Extrair as coordenadas do estabelecimento
+        const estabelecimentoCoords = data.estabelecimento;
+        map.setView(estabelecimentoCoords, 13);
+  
+        // Extrair as coordenadas dos clientes
+        const clientesCoords = data.clientes;
+  
+        // Adicionar marcador para o estabelecimento
+        // L.marker(estabelecimentoCoords).addTo(map).bindPopup('Estabelecimento');
+  
+        // Adicionar marcadores para os clientes
+        // clientesCoords.forEach(cliente => {
+        //   L.marker(cliente).addTo(map).bindPopup('Cliente');
+        // });
+  
+        // Criar a camada de calor com as coordenadas dos clientes
+        var heat = L.heatLayer(clientesCoords, {
           radius: 25,
-          blur: 15
+          blur: 15,
+          minOpacity: 0.9
         }).addTo(map);
+        loadingIndicator.style.display = 'none';
       })
       .catch(error => {
         console.error('Erro ao obter os dados:', error);
+        loadingIndicator.style.display = 'none';
       });
   </script>
 </body>

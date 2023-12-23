@@ -13,6 +13,6 @@ use Illuminate\Support\Facades\Route;
 |
 */
 Route::get('/', [EnderecoEntregaController::class, 'getEnderecos']);
-Route::get('/get-coordenadas', [EnderecoEntregaController::class, 'getCoordenadasClientes']);
-Route::get('/get-coordenadas-estabelecimento', [EnderecoEntregaController::class, 'getCoordenadasEstabelecimento']);
+Route::get('/get-coordenadas', [EnderecoEntregaController::class, 'getCoordenadas']);
+// Route::get('/get-coordenadas-estabelecimento', [EnderecoEntregaController::class, 'getCoordenadasEstabelecimento']);
 Route::post('/salvar-endereco', [EnderecoEntregaController::class, 'postEndereco'])->name('salvarEndereco');

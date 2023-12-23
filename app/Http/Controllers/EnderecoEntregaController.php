@@ -32,48 +32,52 @@ class EnderecoEntregaController extends Controller
         return response()->json(['message' => 'Endereço adicionado com sucesso'], 201);
     }
 
-    function getCoordenadasClientes()
+    function getCoordenadas()
     {
-        $enderecos = EnderecoEntrega::all();
-        $client = new Client();
+        $enderecosClientes = EnderecoEntrega::all();
+        $enderecoEstabelecimento = DB::table('estabelecimentos')->first();
 
-        $coordenadas = [];
-        foreach ($enderecos as $endereco) {
+        $client = new Client();
+        $coordenadasClientes = [];
+        $coordenadasEstabelecimento = [];
+
+        // Obter coordenadas dos endereços dos clientes
+        foreach ($enderecosClientes as $endereco) {
             $formattedAddress = urlencode($endereco->rua . ', ' . $endereco->numero . ', ' . $endereco->bairro . ', ' . $endereco->cidade . ', ' . $endereco->estado);
             $url = 'https://nominatim.openstreetmap.org/search?format=json&q=' . $formattedAddress;
-            
+
             try {
                 $response = $client->request('GET', $url);
                 $data = json_decode($response->getBody(), true);
                 foreach ($data as $result) {
                     if (isset($result['lat']) && isset($result['lon'])) {
-                        $coordenadas[] = [$result['lat'], $result['lon']];
+                        $coordenadasClientes[] = [$result['lat'], $result['lon']];
                     }
                 }
             } catch (Exception $e) {
-                echo "Erro ao buscar coordenadas para o endereço: {$endereco->rua}, {$endereco->numero}, {$endereco->bairro}, {$endereco->cidade}, {$endereco->estado}. Erro: " . $e->getMessage();
+                // Tratar erros, se necessário
             }
-         }
+        }
 
-        return response()->json($coordenadas);
-    }
-
-    function getCoordenadasEstabelecimento()
-    {
-        $enderecoEstabelecimento = DB::table('estabelecimentos')->first();
-        $formattedAddress = urlencode($enderecoEstabelecimento->rua . ', ' . $enderecoEstabelecimento->numero . ', ' . $enderecoEstabelecimento->cidade . ', ' . $enderecoEstabelecimento->estado);
-        $client = new Client();
-        $url = 'https://nominatim.openstreetmap.org/search?format=json&q=' . $formattedAddress;
+        // Obter coordenadas do endereço do estabelecimento
+        $formattedEstabelecimentoAddress = urlencode($enderecoEstabelecimento->rua . ', ' . $enderecoEstabelecimento->numero . ', ' . $enderecoEstabelecimento->cidade . ', ' . $enderecoEstabelecimento->estado);
+        $urlEstabelecimento = 'https://nominatim.openstreetmap.org/search?format=json&q=' . $formattedEstabelecimentoAddress;
 
         try {
-            $response = $client->request('GET', $url);
+            $response = $client->request('GET', $urlEstabelecimento);
             $data = json_decode($response->getBody(), true);
-            $latitude = $data[0]['lat'];
-            $longitude = $data[0]['lon'];
+            $latitudeEstabelecimento = $data[0]['lat'];
+            $longitudeEstabelecimento = $data[0]['lon'];
 
-            return response()->json(['latitude' => $latitude, 'longitude' => $longitude]);
+            // Adicionar coordenadas do estabelecimento à lista de coordenadas
+            $coordenadasEstabelecimento = [$latitudeEstabelecimento, $longitudeEstabelecimento];
         } catch (Exception $e) {
-            return response()->json(['error' => 'Erro ao buscar as coordenadas do endereço do estabelecimento']);
+            // Tratar erros, se necessário
         }
+
+        return response()->json([
+            "estabelecimento" => $coordenadasEstabelecimento,
+            "clientes" => $coordenadasClientes
+        ]);
     }
 }
