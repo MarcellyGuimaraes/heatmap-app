@@ -14,6 +14,7 @@
     <h1>Todos os Endereços</h1>
     <div id="map" style="width: 600px; height: 400px;"></div>
     <div id="loading" v-show="loading">Carregando...</div>
+    <div id="enderecos-nao-encontrados"></div>
     <form @submit.prevent="salvarEndereco">
       <input type="text" v-model="form.cliente" placeholder="Nome do Cliente"><br>
       <input type="text" v-model="form.rua" placeholder="Rua"><br>
@@ -84,6 +85,14 @@
             const estabelecimentoCoords = data.estabelecimento;
             map.setView(estabelecimentoCoords, 13);
             const clientesCoords = data.clientes;
+            const mensagemEnderecosNaoEncontrados = document.getElementById('enderecos-nao-encontrados');
+            if (data.enderecosNaoEncontrados.length > 0) {
+              const mensagens = data.enderecosNaoEncontrados.map(endereco => {
+                return `<p>Endereço não encontrado para ${endereco.nome_cliente}, ${endereco.rua}</p>`;
+              });
+
+              mensagemEnderecosNaoEncontrados.innerHTML = mensagens.join('');
+            }
             const heat = L.heatLayer(clientesCoords, {
               radius: 25,
               blur: 15,

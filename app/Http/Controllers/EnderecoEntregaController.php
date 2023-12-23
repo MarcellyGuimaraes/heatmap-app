@@ -40,6 +40,7 @@ class EnderecoEntregaController extends Controller
         $client = new Client();
         $coordenadasClientes = [];
         $coordenadasEstabelecimento = [];
+        $enderecosNaoEncontrados = [];
 
         // Obter coordenadas dos endereços dos clientes
         foreach ($enderecosClientes as $endereco) {
@@ -54,8 +55,16 @@ class EnderecoEntregaController extends Controller
                         $coordenadasClientes[] = [$result['lat'], $result['lon']];
                     }
                 }
+
+                if (empty($data)) {
+                    $enderecosNaoEncontrados[] = [
+                        'id' => $endereco->endereco_entrega_id,
+                        'nome_cliente' => $endereco->cliente,
+                        'rua' => $endereco->rua
+                    ];
+                }
             } catch (Exception $e) {
-                // Tratar erros, se necessário
+                dd($e);
             }
         }
 
@@ -72,12 +81,13 @@ class EnderecoEntregaController extends Controller
             // Adicionar coordenadas do estabelecimento à lista de coordenadas
             $coordenadasEstabelecimento = [$latitudeEstabelecimento, $longitudeEstabelecimento];
         } catch (Exception $e) {
-            // Tratar erros, se necessário
+            dd($e);
         }
 
         return response()->json([
             "estabelecimento" => $coordenadasEstabelecimento,
-            "clientes" => $coordenadasClientes
+            "clientes" => $coordenadasClientes,
+            "enderecosNaoEncontrados" => $enderecosNaoEncontrados
         ]);
     }
 }
