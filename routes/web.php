@@ -1,7 +1,7 @@
 <?php
 
+use App\Http\Controllers\EnderecoEntregaController;
 use Illuminate\Support\Facades\Route;
-
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -12,7 +12,5 @@ use Illuminate\Support\Facades\Route;
 | be assigned to the "web" middleware group. Make something great!
 |
 */
-
-Route::get('/', function () {
-    return view('welcome');
-});
+Route::get('/', [EnderecoEntregaController::class, 'getEnderecos']);
+Route::post('/salvar-endereco', [EnderecoEntregaController::class, 'postEndereco'])->name('salvarEndereco');
