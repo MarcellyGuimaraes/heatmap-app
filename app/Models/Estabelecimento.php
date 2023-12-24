@@ -5,11 +5,11 @@ use Illuminate\Database\Eloquent\Model;
 
 class Estabelecimento extends Model
 {
-    protected $table = 'estabelecimentos'; // Nome da tabela no banco de dados
+    protected $table = 'estabelecimentos';
 
-    protected $primaryKey = 'est_id'; // Chave primária da tabela
+    protected $primaryKey = 'est_id';
 
-    public $timestamps = true; // Habilita os campos created_at e updated_at
+    public $timestamps = true;
 
     protected $fillable = [
         'est_nome',
@@ -19,5 +19,4 @@ class Estabelecimento extends Model
         'est_cep',
     ];
 
-    // Relacionamento ou métodos adicionais, se houver
 }

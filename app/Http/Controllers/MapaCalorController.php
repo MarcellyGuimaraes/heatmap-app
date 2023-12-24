@@ -2,12 +2,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\Cliente;
-use App\Models\EnderecoPedido;
 use App\Models\Estabelecimento;
-use App\Models\Pedido;
 use Exception;
 use GuzzleHttp\Client;
-use Illuminate\Http\Request;
 
 class MapaCalorController extends Controller
 {
@@ -30,7 +27,6 @@ class MapaCalorController extends Controller
 
         foreach ($clientes as $cliente) {
 
-            // dd($cliente->cli_endereco);
             $formattedAddress = urlencode($cliente->cli_endereco .  ', ' . $cliente->cli_cidade . ', ' . $cliente->cli_estado);
             $url = 'https://nominatim.openstreetmap.org/search?format=json&q=' . $formattedAddress;
 

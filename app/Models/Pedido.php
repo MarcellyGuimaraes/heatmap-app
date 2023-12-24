@@ -5,15 +5,15 @@ use Illuminate\Database\Eloquent\Model;
 
 class Pedido extends Model
 {
-    protected $table = 'pedidos'; // Nome da tabela no banco de dados
+    protected $table = 'pedidos';
 
-    protected $primaryKey = 'ped_id'; // Chave primária da tabela
+    protected $primaryKey = 'ped_id';
 
-    public $timestamps = true; // Habilita os campos created_at e updated_at
+    public $timestamps = true;
 
     protected $fillable = [
         'cliente_id',
-        'endereco_entrega_id', // Referência ao endereço do pedido
+        'endereco_entrega_id',
         'ped_status',
         'ped_valor_total',
         'ped_observacoes',
@@ -24,5 +24,4 @@ class Pedido extends Model
         return $this->belongsTo(EnderecoPedido::class, 'endereco_entrega_id');
     }
 
-    // Relacionamento ou métodos adicionais, se houver
 }

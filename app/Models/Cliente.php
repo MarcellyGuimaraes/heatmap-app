@@ -6,11 +6,11 @@ use Illuminate\Database\Eloquent\Model;
 
 class Cliente extends Model
 {
-    protected $table = 'clientes'; // Nome da tabela no banco de dados
+    protected $table = 'clientes';
 
-    protected $primaryKey = 'cliente_id'; // Chave primária da tabela
+    protected $primaryKey = 'cliente_id';
 
-    public $timestamps = true; // Habilita os campos created_at e updated_at
+    public $timestamps = true;
 
     protected $fillable = [
         'cli_nome',
@@ -19,6 +19,4 @@ class Cliente extends Model
         'cli_estado',
         'cli_cep'
     ];
-
-    // Relacionamento ou métodos adicionais, se houver
 }

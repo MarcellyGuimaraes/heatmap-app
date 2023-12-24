@@ -6,11 +6,11 @@ use Illuminate\Database\Eloquent\Model;
 
 class EnderecoPedido extends Model
 {
-    protected $table = 'endereco_pedido'; // Nome da tabela no banco de dados
+    protected $table = 'endereco_pedido';
 
-    protected $primaryKey = 'endereco_entrega_id'; // Chave primária da tabela
+    protected $primaryKey = 'endereco_entrega_id';
 
-    public $timestamps = true; // Habilita os campos created_at e updated_at
+    public $timestamps = true;
 
     protected $fillable = [
         'cliente_id',

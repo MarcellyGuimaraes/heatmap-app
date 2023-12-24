@@ -41,21 +41,19 @@
       },
       methods: {
         buscarEndereco() {
-            // Verifica se o CEP possui 8 dígitos para realizar a busca
-            if (this.form.cep.length === 8) {
+          if (this.form.cep.length === 8) {
             fetch(`http://viacep.com.br/ws/${this.form.cep}/json/`)
-                .then(response => response.json())
-                .then(data => {
-                this.form.rua = data.logradouro;
-                this.form.bairro = data.bairro;
-                this.form.cidade = data.localidade;
-                this.form.estado = data.uf;
-                // Você pode adicionar mais campos conforme necessário
-                })
-                .catch(error => {
-                console.error('Erro ao buscar o endereço:', error);
-                });
-            }
+            .then(response => response.json())
+            .then(data => {
+              this.form.rua = data.logradouro;
+              this.form.bairro = data.bairro;
+              this.form.cidade = data.localidade;
+              this.form.estado = data.uf;
+            })
+            .catch(error => {
+              console.error('Erro ao buscar o endereço:', error);
+            });
+          }
         },
         criarNovoCliente() {
           fetch('{{ route('criarCliente') }}', {
@@ -67,7 +65,6 @@
             }
           })
           .then(response => {
-            // Redirecionar ou tratar a resposta do servidor, se necessário
             console.log('Resposta do servidor:', response);
           })
           .catch(error => {
