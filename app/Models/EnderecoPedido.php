@@ -26,4 +26,9 @@ class EnderecoPedido extends Model
     {
         return $this->hasOne(Pedido::class, 'endereco_entrega_id');
     }
+
+    public function enderecoCompleto()
+    {
+        return $this->end_rua . ', ' . $this->end_numero . ', ' . $this->end_cidade . ', ' . $this->end_estado;
+    }
 }

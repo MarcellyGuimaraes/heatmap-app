@@ -15,8 +15,15 @@ class Cliente extends Model
     protected $fillable = [
         'cli_nome',
         'cli_endereco',
+        'cli_numero',
+        'cli_bairro',
         'cli_cidade',
         'cli_estado',
         'cli_cep'
     ];
+
+    public function enderecoCompleto()
+    {
+        return $this->cli_endereco . ', ' . $this->cli_numero . ', ' . $this->cli_cidade . ', ' . $this->cli_estado;
+    }
 }

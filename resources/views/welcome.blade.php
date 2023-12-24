@@ -14,6 +14,11 @@
     <div id="map" style="height: 50vh;"></div>
     <div id="loading" v-show="loading">Carregando...</div>
     <div id="enderecos-nao-encontrados"></div>
+
+    <div>
+      <button @click="alternarMapa('clientes')">Mapa de Clientes</button>
+      <button @click="alternarMapa('pedidos')">Mapa de Pedidos</button>
+    </div>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/vue@2.6.14/dist/vue.js"></script>
@@ -26,43 +31,53 @@
       el: '#app',
       data() {
         return {
-          loading: true
+          loading: true,
+          mapaSelecionado: 'clientes',
+          coordenadas: {
+            clientes: [],
+            pedidos: []
+          }
         };
       },
-      mounted() {
-        const map = L.map('map').setView([0, 0], 13);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-          attribution: '© OpenStreetMap contributors'
-        }).addTo(map);
-        const loadingIndicator = document.getElementById('loading');
-        loadingIndicator.style.display = 'block';
-        fetch('/get-coordenadas')
-          .then(response => response.json())
-          .then(data => {
-            const estabelecimentoCoords = data.estabelecimento;
-            map.setView(estabelecimentoCoords, 13);
-            const clientesCoords = data.clientes;
-            const mensagemEnderecosNaoEncontrados = document.getElementById('enderecos-nao-encontrados');
-            if (data.enderecosNaoEncontrados.length > 0) {
-              const mensagens = data.enderecosNaoEncontrados.map(endereco => {
-                return `<p>Endereço não encontrado para ${endereco.nome_cliente}, ${endereco.rua}</p>`;
-              });
+      methods: {
+        alternarMapa(tipoMapa) {
+          this.mapaSelecionado = tipoMapa;
+          this.atualizarMapa();
+        },
+        atualizarMapa() {
+          const map = L.map('map').setView([0, 0], 13);
+          L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors'
+          }).addTo(map);
 
-              mensagemEnderecosNaoEncontrados.innerHTML = mensagens.join('');
-            }
-            const heat = L.heatLayer(clientesCoords, {
-              radius: 25,
-              blur: 15,
-              minOpacity: 0.5
-            }).addTo(map);
-            loadingIndicator.style.display = 'none';
-            this.loading = false;
-          })
-          .catch(error => {
-            console.error('Erro ao obter os dados:', error);
-            loadingIndicator.style.display = 'none';
-            this.loading = false;
-          });
+          const heat = L.heatLayer(this.coordenadas[this.mapaSelecionado], {
+            radius: 25,
+            blur: 15,
+            minOpacity: 0.5
+          }).addTo(map);
+
+          const loadingIndicator = document.getElementById('loading');
+          loadingIndicator.style.display = 'block';
+          loadingIndicator.style.display = 'none';
+          this.loading = false;
+        },
+        obterCoordenadas(tipo) {
+          fetch(`/get-coordenadas/${tipo}`)
+            .then(response => response.json())
+            .then(data => {
+              this.coordenadas[tipo] = data[tipo];
+              if (tipo === this.mapaSelecionado) {
+                this.atualizarMapa();
+              }
+            })
+            .catch(error => {
+              console.error('Erro ao obter os dados:', error);
+              this.loading = false;
+            });
+        }
+      },
+      mounted() {
+        this.obterCoordenadas('clientes'); // Carrega as coordenadas dos clientes ao iniciar a página
       }
     });
   </script>

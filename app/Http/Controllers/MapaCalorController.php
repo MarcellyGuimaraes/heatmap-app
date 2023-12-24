@@ -2,6 +2,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Cliente;
+use App\Models\EnderecoPedido;
 use App\Models\Estabelecimento;
 use Exception;
 use GuzzleHttp\Client;
@@ -15,19 +16,42 @@ class MapaCalorController extends Controller
         return view('welcome', compact('enderecos'));
     }
 
-    public function getCoordenadas()
+    public function getCoordenadas($tipo)
+    {
+        switch ($tipo) {
+            case 'clientes':
+                return $this->obterCoordenadasClientes();
+                break;
+            case 'pedidos':
+                return $this->obterCoordenadasPedidos();
+                break;
+            default:
+                return response()->json(['error' => 'Tipo inválido'], 400);
+                break;
+        }
+    }
+
+    private function obterCoordenadasClientes()
     {
         $clientes = Cliente::all();
-        $estabelecimento = Estabelecimento::first();
+        $coordenadasClientes = $this->obterCoordenadasEntidades($clientes);
+        return response()->json(["clientes" => $coordenadasClientes]);
+    }
 
+    private function obterCoordenadasPedidos()
+    {
+        $pedidos = EnderecoPedido::all();
+        $coordenadasPedidos = $this->obterCoordenadasEntidades($pedidos);
+        return response()->json(["pedidos" => $coordenadasPedidos]);
+    }
+
+    private function obterCoordenadasEntidades($entidades)
+    {
         $client = new Client();
-        $coordenadasClientes = [];
-        $coordenadasEstabelecimento = [];
-        $enderecosNaoEncontrados = [];
+        $coordenadas = [];
 
-        foreach ($clientes as $cliente) {
-
-            $formattedAddress = urlencode($cliente->cli_endereco .  ', ' . $cliente->cli_cidade . ', ' . $cliente->cli_estado);
+        foreach ($entidades as $entidade) {
+            $formattedAddress = urlencode($entidade->enderecoCompleto()); // Supondo um método 'enderecoCompleto' na entidade
             $url = 'https://nominatim.openstreetmap.org/search?format=json&q=' . $formattedAddress;
 
             try {
@@ -36,41 +60,14 @@ class MapaCalorController extends Controller
 
                 foreach ($data as $result) {
                     if (isset($result['lat']) && isset($result['lon'])) {
-                        $coordenadasClientes[] = [$result['lat'], $result['lon']];
+                        $coordenadas[] = [$result['lat'], $result['lon']];
                     }
                 }
-
-                if (empty($data)) {
-                    $enderecosNaoEncontrados[] = [
-                        'id' => $cliente->cli_id,
-                        'nome_cliente' => $cliente->cli_nome,
-                        'endereco' => $cliente->cli_endereco
-                    ];
-                }
             } catch (Exception $e) {
-                dd($e);
+                // Lidar com exceções
             }
         }
 
-        $formattedEstabelecimentoAddress = urlencode($estabelecimento->est_endereco . ', ' . $estabelecimento->est_numero . ', ' . $estabelecimento->est_cidade . ', ' . $estabelecimento->est_estado);
-        $urlEstabelecimento = 'https://nominatim.openstreetmap.org/search?format=json&q=' . $formattedEstabelecimentoAddress;
-
-        try {
-            $response = $client->request('GET', $urlEstabelecimento);
-            $data = json_decode($response->getBody(), true);
-
-            $latitudeEstabelecimento = $data[0]['lat'];
-            $longitudeEstabelecimento = $data[0]['lon'];
-
-            $coordenadasEstabelecimento = [$latitudeEstabelecimento, $longitudeEstabelecimento];
-        } catch (Exception $e) {
-            dd($e);
-        }
-
-        return response()->json([
-            "estabelecimento" => $coordenadasEstabelecimento,
-            "clientes" => $coordenadasClientes,
-            "enderecosNaoEncontrados" => $enderecosNaoEncontrados
-        ]);
+        return $coordenadas;
     }
 }
