@@ -6,6 +6,7 @@ use App\Models\EnderecoPedido;
 use App\Models\Estabelecimento;
 use Exception;
 use GuzzleHttp\Client;
+use Illuminate\Support\Facades\Cache;
 
 class MapaCalorController extends Controller
 {
@@ -18,15 +19,12 @@ class MapaCalorController extends Controller
 
     public function getCoordenadas()
     {
-        // Obter todos os clientes e pedidos do banco de dados
         $clientes = Cliente::all();
         $pedidos = EnderecoPedido::all();
 
-        // Obter coordenadas para clientes e pedidos usando a função obterCoordenadasEntidades
         $resultadoClientes = $this->obterCoordenadasEntidades($clientes);
         $resultadoPedidos = $this->obterCoordenadasEntidades($pedidos);
 
-        // Retornar as coordenadas, coordenadas do estabelecimento e endereços não encontrados em formato JSON
         return response()->json([
             'clientes' => $resultadoClientes['coordenadas'],
             'pedidos' => $resultadoPedidos['coordenadas'],
@@ -35,37 +33,45 @@ class MapaCalorController extends Controller
         ]);
     }
 
-    // Função para obter coordenadas para entidades (clientes ou pedidos)
     private function obterCoordenadasEntidades($entidades)
     {
         $client = new Client();
         $coordenadas = [];
-        $enderecosNaoEncontrados = []; // Array para armazenar endereços não encontrados
+        $enderecosNaoEncontrados = [];
 
         foreach ($entidades as $entidade) {
             $formattedAddress = urlencode($entidade->enderecoCompleto());
-            $url = 'https://nominatim.openstreetmap.org/search?format=json&q=' . $formattedAddress;
+            $cacheKey = 'coord_' . $formattedAddress;
 
-            try {
-                $response = $client->request('GET', $url);
-                $data = json_decode($response->getBody(), true);
+            $cached = Cache::get($cacheKey);
 
-                if (!empty($data)) {
-                    foreach ($data as $result) {
-                        if (isset($result['lat']) && isset($result['lon'])) {
-                            $coordenadas[] = [$result['lat'], $result['lon']];
+            if ($cached) {
+                $coordenadas = array_merge($coordenadas, $cached);
+            } else {
+                try {
+                    $url = 'https://nominatim.openstreetmap.org/search?format=json&q=' . $formattedAddress;
+                    $response = $client->request('GET', $url);
+                    $data = json_decode($response->getBody(), true);
+
+                    if (!empty($data)) {
+                        $coords = [];
+                        foreach ($data as $result) {
+                            if (isset($result['lat']) && isset($result['lon'])) {
+                                $coords[] = [$result['lat'], $result['lon']];
+                                $coordenadas[] = [$result['lat'], $result['lon']];
+                            }
                         }
+                        Cache::put($cacheKey, $coords, 1440); // Cache por 24 horas
+                    } else {
+                        $enderecosNaoEncontrados[] = [
+                            'id' => $entidade->id,
+                            'nome_cliente' => $entidade->nome_cliente,
+                            'rua' => $entidade->rua
+                        ];
                     }
-                } else {
-                    // Se não houver resultados, adiciona o endereço à lista de endereços não encontrados
-                    $enderecosNaoEncontrados[] = [
-                        'id' => $entidade->id,
-                        'nome_cliente' => $entidade->nome_cliente,
-                        'rua' => $entidade->rua
-                    ];
+                } catch (Exception $e) {
+                    // Lidar com exceções
                 }
-            } catch (Exception $e) {
-                // Lidar com exceções
             }
         }
 
@@ -75,7 +81,6 @@ class MapaCalorController extends Controller
         ];
     }
 
-    // Função para obter coordenadas do estabelecimento
     private function obterCoordenadasEstabelecimento()
     {
         $estabelecimento = Estabelecimento::first();
@@ -88,10 +93,13 @@ class MapaCalorController extends Controller
             $response = $client->request('GET', $urlEstabelecimento);
             $data = json_decode($response->getBody(), true);
 
-            $latitudeEstabelecimento = $data[0]['lat'];
-            $longitudeEstabelecimento = $data[0]['lon'];
-
-            $coordenadasEstabelecimento = [$latitudeEstabelecimento, $longitudeEstabelecimento];
+            if (!empty($data)) {
+                $latitudeEstabelecimento = $data[0]['lat'];
+                $longitudeEstabelecimento = $data[0]['lon'];
+                $coordenadasEstabelecimento = [$latitudeEstabelecimento, $longitudeEstabelecimento];
+            } else {
+                $coordenadasEstabelecimento = null;
+            }
         } catch (Exception $e) {
             // Lidar com exceções
         }
