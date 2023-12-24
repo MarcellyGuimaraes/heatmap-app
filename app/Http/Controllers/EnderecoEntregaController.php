@@ -69,7 +69,7 @@ class EnderecoEntregaController extends Controller
         }
 
         // Obter coordenadas do endereço do estabelecimento
-        $formattedEstabelecimentoAddress = urlencode($enderecoEstabelecimento->rua . ', ' . $enderecoEstabelecimento->numero . ', ' . $enderecoEstabelecimento->cidade . ', ' . $enderecoEstabelecimento->estado);
+        $formattedEstabelecimentoAddress = urlencode($enderecoEstabelecimento->rua . ', ' . $enderecoEstabelecimento->numero . ', ' . $enderecoEstabelecimento->bairro . ', ' . $enderecoEstabelecimento->cidade . ', ' . $enderecoEstabelecimento->estado);
         $urlEstabelecimento = 'https://nominatim.openstreetmap.org/search?format=json&q=' . $formattedEstabelecimentoAddress;
 
         try {

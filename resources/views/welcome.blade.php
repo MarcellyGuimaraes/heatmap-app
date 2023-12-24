@@ -96,7 +96,7 @@
             const heat = L.heatLayer(clientesCoords, {
               radius: 25,
               blur: 15,
-              minOpacity: 0.9
+              minOpacity: 0.5
             }).addTo(map);
             loadingIndicator.style.display = 'none';
             this.loading = false;
