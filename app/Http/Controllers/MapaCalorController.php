@@ -18,12 +18,15 @@ class MapaCalorController extends Controller
 
     public function getCoordenadas()
     {
+        // Obter todos os clientes e pedidos do banco de dados
         $clientes = Cliente::all();
         $pedidos = EnderecoPedido::all();
 
+        // Obter coordenadas para clientes e pedidos usando a função obterCoordenadasEntidades
         $resultadoClientes = $this->obterCoordenadasEntidades($clientes);
         $resultadoPedidos = $this->obterCoordenadasEntidades($pedidos);
 
+        // Retornar as coordenadas, coordenadas do estabelecimento e endereços não encontrados em formato JSON
         return response()->json([
             'clientes' => $resultadoClientes['coordenadas'],
             'pedidos' => $resultadoPedidos['coordenadas'],
@@ -32,15 +35,15 @@ class MapaCalorController extends Controller
         ]);
     }
 
+    // Função para obter coordenadas para entidades (clientes ou pedidos)
     private function obterCoordenadasEntidades($entidades)
     {
         $client = new Client();
         $coordenadas = [];
-        $enderecosNaoEncontrados = []; // Inicialize um array para os endereços não encontrados
+        $enderecosNaoEncontrados = []; // Array para armazenar endereços não encontrados
 
         foreach ($entidades as $entidade) {
             $formattedAddress = urlencode($entidade->enderecoCompleto());
-
             $url = 'https://nominatim.openstreetmap.org/search?format=json&q=' . $formattedAddress;
 
             try {
@@ -54,11 +57,11 @@ class MapaCalorController extends Controller
                         }
                     }
                 } else {
-                    // Se o resultado estiver vazio, adicione o endereço à lista de endereços não encontrados
+                    // Se não houver resultados, adiciona o endereço à lista de endereços não encontrados
                     $enderecosNaoEncontrados[] = [
                         'id' => $entidade->id,
-                        'nome_cliente' => $entidade->nome_cliente, // Ajuste para os campos corretos da sua entidade
-                        'rua' => $entidade->rua // Ajuste para os campos corretos da sua entidade
+                        'nome_cliente' => $entidade->nome_cliente,
+                        'rua' => $entidade->rua
                     ];
                 }
             } catch (Exception $e) {
@@ -68,11 +71,11 @@ class MapaCalorController extends Controller
 
         return [
             'coordenadas' => $coordenadas,
-            'enderecosNaoEncontrados' => $enderecosNaoEncontrados // Retorne os endereços não encontrados
+            'enderecosNaoEncontrados' => $enderecosNaoEncontrados
         ];
     }
 
-
+    // Função para obter coordenadas do estabelecimento
     private function obterCoordenadasEstabelecimento()
     {
         $estabelecimento = Estabelecimento::first();
@@ -90,7 +93,7 @@ class MapaCalorController extends Controller
 
             $coordenadasEstabelecimento = [$latitudeEstabelecimento, $longitudeEstabelecimento];
         } catch (Exception $e) {
-            dd($e);
+            // Lidar com exceções
         }
 
         return $coordenadasEstabelecimento;
