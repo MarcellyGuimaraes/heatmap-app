@@ -21,33 +21,14 @@ class MapaCalorController extends Controller
         $clientes = Cliente::all();
         $pedidos = EnderecoPedido::all();
 
-        $coordenadasClientes = $this->obterCoordenadasEntidades($clientes);
-        $coordenadasPedidos = $this->obterCoordenadasEntidades($pedidos);
-        $coordenadasEstabelecimento = $this->obterCoordenadasEstabelecimento();
+        $resultadoClientes = $this->obterCoordenadasEntidades($clientes);
+        $resultadoPedidos = $this->obterCoordenadasEntidades($pedidos);
 
         return response()->json([
-            'clientes' => $coordenadasClientes,
-            'pedidos' => $coordenadasPedidos,
-            'estabelecimento' => $coordenadasEstabelecimento
-        ]);
-    }
-
-    private function obterCoordenadas($tipo)
-    {
-        $coordenadas = [];
-        $estabelecimentoCoords = $this->obterCoordenadasEstabelecimento();
-        
-        if ($tipo === 'clientes') {
-            $clientes = Cliente::all();
-            $coordenadas = $this->obterCoordenadasEntidades($clientes);
-        } elseif ($tipo === 'pedidos') {
-            $pedidos = EnderecoPedido::all();
-            $coordenadas = $this->obterCoordenadasEntidades($pedidos);
-        }
-
-        return response()->json([
-            $tipo => $coordenadas,
-            'estabelecimento' => $estabelecimentoCoords
+            'clientes' => $resultadoClientes['coordenadas'],
+            'pedidos' => $resultadoPedidos['coordenadas'],
+            'estabelecimento' => $this->obterCoordenadasEstabelecimento(),
+            'enderecosNaoEncontrados' => array_merge($resultadoClientes['enderecosNaoEncontrados'], $resultadoPedidos['enderecosNaoEncontrados'])
         ]);
     }
 
@@ -55,27 +36,42 @@ class MapaCalorController extends Controller
     {
         $client = new Client();
         $coordenadas = [];
+        $enderecosNaoEncontrados = []; // Inicialize um array para os endereços não encontrados
 
         foreach ($entidades as $entidade) {
-            $formattedAddress = urlencode($entidade->enderecoCompleto()); // Supondo um método 'enderecoCompleto' na entidade
+            $formattedAddress = urlencode($entidade->enderecoCompleto());
+
             $url = 'https://nominatim.openstreetmap.org/search?format=json&q=' . $formattedAddress;
 
             try {
                 $response = $client->request('GET', $url);
                 $data = json_decode($response->getBody(), true);
 
-                foreach ($data as $result) {
-                    if (isset($result['lat']) && isset($result['lon'])) {
-                        $coordenadas[] = [$result['lat'], $result['lon']];
+                if (!empty($data)) {
+                    foreach ($data as $result) {
+                        if (isset($result['lat']) && isset($result['lon'])) {
+                            $coordenadas[] = [$result['lat'], $result['lon']];
+                        }
                     }
+                } else {
+                    // Se o resultado estiver vazio, adicione o endereço à lista de endereços não encontrados
+                    $enderecosNaoEncontrados[] = [
+                        'id' => $entidade->id,
+                        'nome_cliente' => $entidade->nome_cliente, // Ajuste para os campos corretos da sua entidade
+                        'rua' => $entidade->rua // Ajuste para os campos corretos da sua entidade
+                    ];
                 }
             } catch (Exception $e) {
                 // Lidar com exceções
             }
         }
 
-        return $coordenadas;
+        return [
+            'coordenadas' => $coordenadas,
+            'enderecosNaoEncontrados' => $enderecosNaoEncontrados // Retorne os endereços não encontrados
+        ];
     }
+
 
     private function obterCoordenadasEstabelecimento()
     {

@@ -16,7 +16,7 @@
       <a href="/formulario-pedido">ADICIONAR PEDIDOS</a>
     </div>
 
-    <div id="map" style="height: 50vh;"></div>
+    <div id="map" style="height: 65vh;width: 40vw;position: relative;"></div>
     <div id="loading" v-show="loading">Carregando...</div>
     <div id="enderecos-nao-encontrados"></div>
     <div>
@@ -67,6 +67,15 @@
 
               if (this.heatLayer) {
                 this.map.removeLayer(this.heatLayer); // Remove a camada de mapa de calor existente
+              }
+
+              const mensagemEnderecosNaoEncontrados = document.getElementById('enderecos-nao-encontrados');
+              if (data.enderecosNaoEncontrados.length > 0) {
+                const mensagens = data.enderecosNaoEncontrados.map(endereco => {
+                  return `<p>Endereço não encontrado para ${endereco.nome_cliente}, ${endereco.rua}</p>`;
+                });
+
+                mensagemEnderecosNaoEncontrados.innerHTML = mensagens.join('');
               }
 
               this.heatLayer = L.heatLayer(coordenadas, {
