@@ -11,13 +11,17 @@
 
 <body>
   <div id="app">
+    <div>
+      <a href="/formulario-clientes">ADICIONAR CLIENTES</a>
+      <a href="/formulario-pedido">ADICIONAR PEDIDOS</a>
+    </div>
+
     <div id="map" style="height: 50vh;"></div>
     <div id="loading" v-show="loading">Carregando...</div>
     <div id="enderecos-nao-encontrados"></div>
-
     <div>
-      <button @click="alternarMapa('clientes')">Mapa de Clientes</button>
-      <button @click="alternarMapa('pedidos')">Mapa de Pedidos</button>
+      <button @click="alternarMapa('clientes')">Mapa de Calor - Clientes</button>
+      <button @click="alternarMapa('pedidos')">Mapa de Calor - Pedidos</button>
     </div>
   </div>
 
@@ -32,26 +36,17 @@
       data() {
         return {
           loading: true,
-          mapaSelecionado: 'clientes',
-          coordenadas: {
-            clientes: [],
-            pedidos: []
-          },
-          map: null,
-          heat: null // Adicionando a variável 'heat' para armazenar a camada de calor
+          tipoMapa: 'clientes',
+          map: null, // Guarda a referência do mapa
+          heatLayer: null // Guarda a referência do mapa de calor
         };
       },
       methods: {
-        alternarMapa(tipoMapa) {
-          this.mapaSelecionado = tipoMapa;
-          this.atualizarMapa();
-          this.obterCoordenadas();
+        alternarMapa(tipo) {
+          this.tipoMapa = tipo;
+          this.carregarMapa();
         },
-        atualizarMapa() {
-          const loadingIndicator = document.getElementById('loading');
-          loadingIndicator.style.display = 'block';
-          this.loading = true;
-
+        carregarMapa() {
           if (!this.map) {
             this.map = L.map('map').setView([0, 0], 13);
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -59,48 +54,39 @@
             }).addTo(this.map);
           }
 
-          const coordenadas = this.coordenadas[this.mapaSelecionado];
+          const loadingIndicator = document.getElementById('loading');
+          loadingIndicator.style.display = 'block';
 
-          if (coordenadas.length > 0) {
-            if (this.heat) {
-              this.map.removeLayer(this.heat);
-            }
-
-            this.heat = L.heatLayer(coordenadas, {
-              radius: 25,
-              blur: 15,
-              minOpacity: 0.5
-            }).addTo(this.map);
-
-            loadingIndicator.style.display = 'none';
-            this.loading = false;
-          } else {
-            console.error('Dados de coordenadas ausentes ou inválidos.');
-            this.loading = false;
-          }
-        },
-        obterCoordenadas() {
-          fetch(`/get-coordenadas`)
+          fetch(`/get-coordenadas?tipo=${this.tipoMapa}`)
             .then(response => response.json())
             .then(data => {
-              console.log(data); // Exibe os dados recebidos no console
-              this.coordenadas.clientes = data.clientes;
-              this.coordenadas.pedidos = data.pedidos;
               const estabelecimentoCoords = data.estabelecimento;
+              this.map.setView(estabelecimentoCoords, 13);
 
-              if (this.mapaSelecionado === 'clientes' || this.mapaSelecionado === 'pedidos') {
-                this.atualizarMapa();
-                this.map.setView(estabelecimentoCoords, 13);
+              const coordenadas = this.tipoMapa === 'clientes' ? data.clientes : data.pedidos;
+
+              if (this.heatLayer) {
+                this.map.removeLayer(this.heatLayer); // Remove a camada de mapa de calor existente
               }
+
+              this.heatLayer = L.heatLayer(coordenadas, {
+                radius: 25,
+                blur: 15,
+                minOpacity: 0.5
+              }).addTo(this.map);
+
+              loadingIndicator.style.display = 'none';
+              this.loading = false;
             })
             .catch(error => {
               console.error('Erro ao obter os dados:', error);
+              loadingIndicator.style.display = 'none';
               this.loading = false;
             });
-        },
+        }
       },
       mounted() {
-        this.obterCoordenadas(); // Carrega as coordenadas ao iniciar a página
+        this.carregarMapa(); // Carregar o mapa inicialmente
       }
     });
   </script>
