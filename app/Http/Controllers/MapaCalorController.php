@@ -70,4 +70,26 @@ class MapaCalorController extends Controller
 
         return $coordenadas;
     }
+
+    function obterCoordenadasEstabelecimentos()
+    {
+        $formattedEstabelecimentoAddress = urlencode($estabelecimento->est_endereco . ', ' . $estabelecimento->est_numero . ', ' . $estabelecimento->est_cidade . ', ' . $estabelecimento->est_estado);
+        $urlEstabelecimento = 'https://nominatim.openstreetmap.org/search?format=json&q=' . $formattedEstabelecimentoAddress;
+
+        try {
+            $response = $client->request('GET', $urlEstabelecimento);
+            $data = json_decode($response->getBody(), true);
+
+            $latitudeEstabelecimento = $data[0]['lat'];
+            $longitudeEstabelecimento = $data[0]['lon'];
+
+            $coordenadasEstabelecimento = [$latitudeEstabelecimento, $longitudeEstabelecimento];
+        } catch (Exception $e) {
+            dd($e);
+        }
+
+        return response()->json([
+            "estabelecimento" => $coordenadasEstabelecimento
+        ]);
+    }
 }
