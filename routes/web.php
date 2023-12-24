@@ -17,7 +17,7 @@ use Illuminate\Support\Facades\Route;
 |
 */
 Route::get('/', [MapaCalorController::class, 'getEnderecos']);
-Route::get('/get-coordenadas/{tipo}', [MapaCalorController::class, 'getCoordenadas']);
+Route::get('/get-coordenadas', [MapaCalorController::class, 'getCoordenadas']);
 
 Route::get('/formulario-clientes', [ClienteController::class, 'showFormCliente'])->name('formularioClientes');
 Route::post('/criar-cliente', [ClienteController::class, 'criarCliente'])->name('criarCliente');

@@ -36,50 +36,71 @@
           coordenadas: {
             clientes: [],
             pedidos: []
-          }
+          },
+          map: null,
+          heat: null // Adicionando a variável 'heat' para armazenar a camada de calor
         };
       },
       methods: {
         alternarMapa(tipoMapa) {
           this.mapaSelecionado = tipoMapa;
           this.atualizarMapa();
+          this.obterCoordenadas();
         },
         atualizarMapa() {
-          const map = L.map('map').setView([0, 0], 13);
-          L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '© OpenStreetMap contributors'
-          }).addTo(map);
-
-          const heat = L.heatLayer(this.coordenadas[this.mapaSelecionado], {
-            radius: 25,
-            blur: 15,
-            minOpacity: 0.5
-          }).addTo(map);
-
           const loadingIndicator = document.getElementById('loading');
           loadingIndicator.style.display = 'block';
-          loadingIndicator.style.display = 'none';
-          this.loading = false;
+          this.loading = true;
+
+          if (!this.map) {
+            this.map = L.map('map').setView([0, 0], 13);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+              attribution: '© OpenStreetMap contributors'
+            }).addTo(this.map);
+          }
+
+          const coordenadas = this.coordenadas[this.mapaSelecionado];
+
+          if (coordenadas.length > 0) {
+            if (this.heat) {
+              this.map.removeLayer(this.heat);
+            }
+
+            this.heat = L.heatLayer(coordenadas, {
+              radius: 25,
+              blur: 15,
+              minOpacity: 0.5
+            }).addTo(this.map);
+
+            loadingIndicator.style.display = 'none';
+            this.loading = false;
+          } else {
+            console.error('Dados de coordenadas ausentes ou inválidos.');
+            this.loading = false;
+          }
         },
-        obterCoordenadas(tipo) {
-          fetch(`/get-coordenadas/${tipo}`)
+        obterCoordenadas() {
+          fetch(`/get-coordenadas`)
             .then(response => response.json())
             .then(data => {
-              this.coordenadas[tipo] = data[tipo];
+              console.log(data); // Exibe os dados recebidos no console
+              this.coordenadas.clientes = data.clientes;
+              this.coordenadas.pedidos = data.pedidos;
               const estabelecimentoCoords = data.estabelecimento;
-              map.setView(estabelecimentoCoords, 13);
-              if (tipo === this.mapaSelecionado) {
+
+              if (this.mapaSelecionado === 'clientes' || this.mapaSelecionado === 'pedidos') {
                 this.atualizarMapa();
+                this.map.setView(estabelecimentoCoords, 13);
               }
             })
             .catch(error => {
               console.error('Erro ao obter os dados:', error);
               this.loading = false;
             });
-        }
+        },
       },
       mounted() {
-        this.obterCoordenadas('clientes'); // Carrega as coordenadas dos clientes ao iniciar a página
+        this.obterCoordenadas(); // Carrega as coordenadas ao iniciar a página
       }
     });
   </script>

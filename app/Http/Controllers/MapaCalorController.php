@@ -16,33 +16,39 @@ class MapaCalorController extends Controller
         return view('welcome', compact('enderecos'));
     }
 
-    public function getCoordenadas($tipo)
-    {
-        switch ($tipo) {
-            case 'clientes':
-                return $this->obterCoordenadasClientes();
-                break;
-            case 'pedidos':
-                return $this->obterCoordenadasPedidos();
-                break;
-            default:
-                return response()->json(['error' => 'Tipo inválido'], 400);
-                break;
-        }
-    }
-
-    private function obterCoordenadasClientes()
+    public function getCoordenadas()
     {
         $clientes = Cliente::all();
+        $pedidos = EnderecoPedido::all();
+
         $coordenadasClientes = $this->obterCoordenadasEntidades($clientes);
-        return response()->json(["clientes" => $coordenadasClientes]);
+        $coordenadasPedidos = $this->obterCoordenadasEntidades($pedidos);
+        $coordenadasEstabelecimento = $this->obterCoordenadasEstabelecimento();
+
+        return response()->json([
+            'clientes' => $coordenadasClientes,
+            'pedidos' => $coordenadasPedidos,
+            'estabelecimento' => $coordenadasEstabelecimento
+        ]);
     }
 
-    private function obterCoordenadasPedidos()
+    private function obterCoordenadas($tipo)
     {
-        $pedidos = EnderecoPedido::all();
-        $coordenadasPedidos = $this->obterCoordenadasEntidades($pedidos);
-        return response()->json(["pedidos" => $coordenadasPedidos]);
+        $coordenadas = [];
+        $estabelecimentoCoords = $this->obterCoordenadasEstabelecimento();
+        
+        if ($tipo === 'clientes') {
+            $clientes = Cliente::all();
+            $coordenadas = $this->obterCoordenadasEntidades($clientes);
+        } elseif ($tipo === 'pedidos') {
+            $pedidos = EnderecoPedido::all();
+            $coordenadas = $this->obterCoordenadasEntidades($pedidos);
+        }
+
+        return response()->json([
+            $tipo => $coordenadas,
+            'estabelecimento' => $estabelecimentoCoords
+        ]);
     }
 
     private function obterCoordenadasEntidades($entidades)
@@ -71,8 +77,11 @@ class MapaCalorController extends Controller
         return $coordenadas;
     }
 
-    function obterCoordenadasEstabelecimentos()
+    private function obterCoordenadasEstabelecimento()
     {
+        $estabelecimento = Estabelecimento::first();
+        $client = new Client();
+
         $formattedEstabelecimentoAddress = urlencode($estabelecimento->est_endereco . ', ' . $estabelecimento->est_numero . ', ' . $estabelecimento->est_cidade . ', ' . $estabelecimento->est_estado);
         $urlEstabelecimento = 'https://nominatim.openstreetmap.org/search?format=json&q=' . $formattedEstabelecimentoAddress;
 
@@ -88,8 +97,6 @@ class MapaCalorController extends Controller
             dd($e);
         }
 
-        return response()->json([
-            "estabelecimento" => $coordenadasEstabelecimento
-        ]);
+        return $coordenadasEstabelecimento;
     }
 }
