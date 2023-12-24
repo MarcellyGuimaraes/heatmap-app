@@ -66,6 +66,8 @@
             .then(response => response.json())
             .then(data => {
               this.coordenadas[tipo] = data[tipo];
+              const estabelecimentoCoords = data.estabelecimento;
+              map.setView(estabelecimentoCoords, 13);
               if (tipo === this.mapaSelecionado) {
                 this.atualizarMapa();
               }
