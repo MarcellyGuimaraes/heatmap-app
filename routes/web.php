@@ -25,3 +25,4 @@ Route::post('/criar-cliente', [ClienteController::class, 'criarCliente'])->name(
 
 Route::get('/formulario-pedido', [PedidoController::class, 'showFormPedido'])->name('formularioPedido');
 Route::post('/criar-pedido', [PedidoController::class, 'criarPedido'])->name('criarPedido');
+Route::get('/criar-registros', [PedidoController::class, 'criarRegistrosAleatorios'])->name('criarRegistrosAleatorios');

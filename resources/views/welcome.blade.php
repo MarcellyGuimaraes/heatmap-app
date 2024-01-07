@@ -2,39 +2,36 @@
 <html lang="pt-BR">
 
 <head>
-  <!-- Definição do conjunto de caracteres e configuração inicial para dispositivos -->
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Laravel</title>
 
+  <!-- Importação do estilo CSS do Tailwind -->
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  
   <!-- Importação do estilo CSS da biblioteca Leaflet para mapas -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
     integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
 </head>
 
-<body>
-  <!-- Div que contém o aplicativo Vue.js -->
-  <div id="app">
-    <!-- Links para adicionar clientes e pedidos -->
-    <div>
-      <a href="/formulario-clientes">ADICIONAR CLIENTES</a>
-      <a href="/formulario-pedido">ADICIONAR PEDIDOS</a>
+<body class="bg-gray-100">
+  <div id="app" class="container mx-auto p-4">
+    <h1 class="text-3xl font-bold mb-4">Mapa de calor com laravel</h1>
+
+    <!-- Div para exibir botões -->
+    <div class="mb-4">
+      <button :class="{ 'bg-blue-700': tipoMapa === 'clientes' }" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mr-4" @click="alternarMapa('clientes')">Mapa de Calor - Clientes</button>
+      <button :class="{ 'bg-blue-700': tipoMapa === 'pedidos' }" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" @click="alternarMapa('pedidos')">Mapa de Calor - Pedidos</button>
     </div>
 
     <!-- Div que contém o mapa -->
-    <div id="map" style="height: 65vh;width: 40vw;position: relative;"></div>
+    <div id="map" class="mb-4 relative" style="width:60rem; height:40rem;"></div>
 
     <!-- Div para exibir mensagem de carregamento -->
-    <div id="loading" v-show="loading">Carregando...</div>
+    <div id="loading" class="hidden">Carregando...</div>
 
     <!-- Div para exibir endereços não encontrados -->
     <div id="enderecos-nao-encontrados"></div>
-
-    <!-- Botões para alternar entre mapas de clientes e pedidos -->
-    <div>
-      <button @click="alternarMapa('clientes')">Mapa de Calor - Clientes</button>
-      <button @click="alternarMapa('pedidos')">Mapa de Calor - Pedidos</button>
-    </div>
   </div>
 
   <!-- Importação da biblioteca Vue.js -->
